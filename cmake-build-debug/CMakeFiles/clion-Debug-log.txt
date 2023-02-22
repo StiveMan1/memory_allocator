@@ -1,0 +1,4 @@
+C:\Users\04024\AppData\Local\JetBrains\Toolbox\apps\CLion\ch-0\223.8617.54\bin\cmake\win\x64\bin\cmake.exe -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=C:/Users/04024/AppData/Local/JetBrains/Toolbox/apps/CLion/ch-0/223.8617.54/bin/ninja/win/x64/ninja.exe -G Ninja -S C:\Users\04024\CLionProjects\memory_allocator -B C:\Users\04024\CLionProjects\memory_allocator\cmake-build-debug
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/Users/04024/CLionProjects/memory_allocator/cmake-build-debug

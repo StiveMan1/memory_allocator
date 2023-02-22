@@ -1,0 +1,8 @@
+# ninja log v5
+0	158	6987490926740186	CMakeFiles/Sakaar_Memory.dir/main.c.obj	403f55f937487e33
+7	220	6987490927381522	CMakeFiles/Sakaar_Memory.dir/memory.c.obj	7d0639042244579a
+0	154	6987491097064799	CMakeFiles/memory_allocator.dir/main.c.obj	890f3961cd969da4
+6	191	6987491097434771	CMakeFiles/memory_allocator.dir/memory.c.obj	ef54eb11f9f2a64c
+1	275	6987491230352974	build.ninja	64155f55ffbbbdce
+1	154	6987491553593353	CMakeFiles/memory_allocator.dir/main.c.obj	890f3961cd969da4
+154	382	6987491555800771	memory_allocator.exe	e8d391fce0d34444
