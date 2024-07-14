@@ -39,15 +39,10 @@ static struct mem_page *page_parents[256];
 #define __list_spin(header) header.first = __list_next(header.first);
 
 
-int get_pool_size(size_t size) {
-    --size;
-    int pool_size = 0;
-
-    while (size > 0) {
-        size >>= 1;
-        pool_size++;
-    }
-    return pool_size < 3 ? 3 : pool_size;
+int get_pool_size(const size_t size) {
+    int pool_size = 2;
+    while (size > 1 << ++pool_size) {}
+    return pool_size;
 }
 
 // Page Tree
