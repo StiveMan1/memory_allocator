@@ -158,8 +158,7 @@ void *mem_malloc(struct mem_ctx *ctx, const size_t size) {
     void *res = pool->data_pos + pool->allocator.filled;
     if (pool->allocator.first_free != NULL) pool->allocator.first_free = MEM_PTR(res = pool->allocator.first_free);
 
-    pool->allocator.filled += 1 << pool->pool_size;
-    if (pool->allocator.filled == POOL_SIZE) __list_spin(ctx->pools_map[pool_size - 3])
+    if ((pool->allocator.filled += 1 << pool->pool_size) == POOL_SIZE) __list_spin(ctx->pools_map[pool_size - 3])
     return res;
 }
 
@@ -171,9 +170,8 @@ void mem_free(struct mem_ctx *ctx, void *data) {
     MEM_PTR(data) = pool->allocator.first_free;
     pool->allocator.first_free = data;
 
-    pool->allocator.filled -= 1 << pool->pool_size;
     __list_take(ctx->pools_map[pool->pool_size - 3], pool)
 
-    if (pool->allocator.filled == 0) mem_free_pool(ctx, page, pool);
+    if ((pool->allocator.filled -= 1 << pool->pool_size) == 0) mem_free_pool(ctx, page, pool);
     else __list_put(ctx->pools_map[pool->pool_size - 3], pool)
 }
