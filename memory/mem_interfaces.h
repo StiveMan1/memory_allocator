@@ -29,7 +29,6 @@ struct __list_node {
 struct __allocator {
     unsigned short filled;
     void *first_free;
-    char flag;
 };
 
 
