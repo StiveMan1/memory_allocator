@@ -12,31 +12,31 @@ static struct mem_page *page_parents[256];
 #define MEM_PTR(pool) (*(void **) (pool))
 
 
-#define __list_node(type, data) ((type)data)->list_node
-#define __list_next(type, data) __list_node(type, data).next
-#define __list_prev(type, data) __list_node(type, data).prev
+#define __list_node(data) ((struct __list_node *)data)
+#define __list_next(data) __list_node(data)->next
+#define __list_prev(data) __list_node(data)->prev
 
 
-#define __list_put(type, header, name) { \
-    if (header.size++ == 0) name->list_node = (struct __list_node){name, name};                        \
-    else {                                                                                              \
-        name->list_node = (struct __list_node){header.first, __list_node(type, header.first).prev};   \
-        __list_next(type, __list_prev(type, header.first)) = name;                                     \
-        __list_prev(type, header.first) = name;                                                        \
-    }                                                                                                   \
-    header.first = name;                                                                               \
+#define __list_put(header, name) { \
+    if (header.size++ == 0) name->list_node = (struct __list_node){name, name};         \
+    else {                                                                              \
+        name->list_node = (struct __list_node){header.first, __list_prev(header.first)};\
+        __list_next(__list_prev(header.first)) = name;                                  \
+        __list_prev(header.first) = name;                                               \
+    }                                                                                   \
+    header.first = name;                                                                \
 }
 
 
-#define __list_take(type, header, name) {                                       \
-    __list_next(type, __list_prev(type, name)) = __list_next(type, name);       \
-    __list_prev(type, __list_next(type, name)) = __list_prev(type, name);       \
-    if (--header.size == 0) header.first = NULL;                              \
-    else if (header.first == name) header.first = __list_next(type, name);    \
+#define __list_take(header, name) {                                 \
+    __list_next(__list_prev(name)) = __list_next(name);             \
+    __list_prev(__list_next(name)) = __list_prev(name);             \
+    if (--header.size == 0) header.first = NULL;                    \
+    else if (header.first == name) header.first = __list_next(name);\
 }
 
 
-#define __list_spin(type, header) header.first = __list_next(type, header.first);
+#define __list_spin(header) header.first = __list_next(header.first);
 
 
 int get_pool_size(size_t size) {
@@ -49,7 +49,6 @@ int get_pool_size(size_t size) {
     }
     return pool_size < 3 ? 3 : pool_size;
 }
-
 
 // Page Tree
 struct mem_page *mem_tree_page_find(const struct mem_ctx *ctx, const void *data) {
@@ -121,7 +120,7 @@ struct mem_pool *mem_alloc_pool(struct mem_ctx *ctx) {
         mem_tree_page_insert(ctx, page);
         if (page == NULL) return NULL;
 
-        __list_put(struct mem_page *, ctx->pages_list, page)
+        __list_put(ctx->pages_list, page)
     }
 
     struct mem_pool *pool = &page->pools[page->allocator.filled];
@@ -129,7 +128,7 @@ struct mem_pool *mem_alloc_pool(struct mem_ctx *ctx) {
         page->allocator.first_free = (pool = page->allocator.first_free)->allocator.first_free;
 
     pool->allocator.first_free = NULL;
-    if (++page->allocator.filled == POOL_NUMBER) __list_spin(struct mem_page *, ctx->pages_list)
+    if (++page->allocator.filled == POOL_NUMBER) __list_spin(ctx->pages_list)
     return pool;
 }
 
@@ -138,8 +137,8 @@ void mem_free_pool(struct mem_ctx *ctx, struct mem_page *page, struct mem_pool *
     page->allocator.first_free = pool;
     --page->allocator.filled;
 
-    __list_take(struct mem_page *, ctx->pages_list, page)
-    __list_put(struct mem_page *, ctx->pages_list, page)
+    __list_take(ctx->pages_list, page)
+    __list_put(ctx->pages_list, page)
 }
 
 
@@ -153,14 +152,14 @@ void *mem_malloc(struct mem_ctx *ctx, const size_t size) {
         if (pool == NULL) return NULL;
 
         pool->pool_size = pool_size;
-        __list_put(struct mem_pool *, ctx->pools_map[pool_size - 3], pool)
+        __list_put(ctx->pools_map[pool_size - 3], pool)
     }
 
     void *res = pool->data_pos + pool->allocator.filled;
     if (pool->allocator.first_free != NULL) pool->allocator.first_free = MEM_PTR(res = pool->allocator.first_free);
 
     pool->allocator.filled += 1 << pool->pool_size;
-    if (pool->allocator.filled == POOL_SIZE) __list_spin(struct mem_pool *, ctx->pools_map[pool_size - 3])
+    if (pool->allocator.filled == POOL_SIZE) __list_spin(ctx->pools_map[pool_size - 3])
     return res;
 }
 
@@ -173,8 +172,8 @@ void mem_free(struct mem_ctx *ctx, void *data) {
     pool->allocator.first_free = data;
 
     pool->allocator.filled -= 1 << pool->pool_size;
-    __list_take(struct mem_pool *, ctx->pools_map[pool->pool_size - 3], pool)
+    __list_take(ctx->pools_map[pool->pool_size - 3], pool)
 
     if (pool->allocator.filled == 0) mem_free_pool(ctx, page, pool);
-    else __list_put(struct mem_pool *, ctx->pools_map[pool->pool_size - 3], pool)
+    else __list_put(ctx->pools_map[pool->pool_size - 3], pool)
 }

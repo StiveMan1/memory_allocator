@@ -8,8 +8,8 @@
 #include "mem_pool.h"
 
 struct mem_page {
-    struct __tree_node tree_node;
     struct __list_node list_node;
+    struct __tree_node tree_node;
     struct __allocator allocator;
 
     struct mem_pool pools[POOL_NUMBER];
