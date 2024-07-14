@@ -146,21 +146,21 @@ void mem_free_pool(struct mem_ctx *ctx, struct mem_page *page, struct mem_pool *
 // Pool Tree
 void *mem_malloc(struct mem_ctx *ctx, const size_t size) {
     const size_t pool_size = get_pool_size(size);
-    struct mem_pool *pool = ctx->pools_map[pool_size].first;
+    struct mem_pool *pool = ctx->pools_map[pool_size - 3].first;
 
     if (pool == NULL || pool->allocator.filled == POOL_SIZE) {
         pool = mem_alloc_pool(ctx);
         if (pool == NULL) return NULL;
 
         pool->pool_size = pool_size;
-        __list_put(struct mem_pool *, ctx->pools_map[pool_size], pool)
+        __list_put(struct mem_pool *, ctx->pools_map[pool_size - 3], pool)
     }
 
     void *res = pool->data_pos + pool->allocator.filled;
     if (pool->allocator.first_free != NULL) pool->allocator.first_free = MEM_PTR(res = pool->allocator.first_free);
 
     pool->allocator.filled += 1 << pool->pool_size;
-    if (pool->allocator.filled == POOL_SIZE) __list_spin(struct mem_pool *, ctx->pools_map[pool_size])
+    if (pool->allocator.filled == POOL_SIZE) __list_spin(struct mem_pool *, ctx->pools_map[pool_size - 3])
     return res;
 }
 
@@ -168,14 +168,13 @@ void mem_free(struct mem_ctx *ctx, void *data) {
     struct mem_page *page = mem_tree_page_find(ctx, data);
 
     struct mem_pool *pool = &page->pools[((size_t) data - (size_t) page->data) / POOL_SIZE];
-    const size_t pool_size = pool->pool_size;
 
     MEM_PTR(data) = pool->allocator.first_free;
     pool->allocator.first_free = data;
 
     pool->allocator.filled -= 1 << pool->pool_size;
-    __list_take(struct mem_pool *, ctx->pools_map[pool_size], pool)
+    __list_take(struct mem_pool *, ctx->pools_map[pool->pool_size - 3], pool)
 
     if (pool->allocator.filled == 0) mem_free_pool(ctx, page, pool);
-    else __list_put(struct mem_pool *, ctx->pools_map[pool_size], pool)
+    else __list_put(struct mem_pool *, ctx->pools_map[pool->pool_size - 3], pool)
 }

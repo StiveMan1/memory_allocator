@@ -18,8 +18,6 @@ struct mem_pool {
 
     unsigned short pool_size;
     void *data_pos;
-
-
 };
 
 #endif //MEM_POOL_H

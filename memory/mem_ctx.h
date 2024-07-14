@@ -10,7 +10,7 @@
 
 struct mem_ctx {
     struct __list_header pages_list;
-    struct __list_header pools_map[32];
+    struct __list_header pools_map[10];
 
     struct mem_page *pages_root;
 };
