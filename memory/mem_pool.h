@@ -13,11 +13,8 @@
 #include "mem_interfaces.h"
 
 struct mem_pool {
-    struct __tree_node tree_node;
     struct __list_node list_node;
     struct __allocator allocator;
-
-    struct __list_header list_header;
 
     unsigned short pool_size;
     void *data_pos;

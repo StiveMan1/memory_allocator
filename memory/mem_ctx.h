@@ -9,10 +9,10 @@
 #include "mem_pool.h"
 
 struct mem_ctx {
-    struct __list_header page_list;
+    struct __list_header pages_list;
+    struct __list_header pools_map[32];
 
     struct mem_page *pages_root;
-    struct mem_pool *pools_root;
 };
 
 void *mem_malloc(struct mem_ctx *, size_t);

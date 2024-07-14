@@ -13,24 +13,24 @@ size_t printing_pos;
 
 
 // Print the inorder traversal of the tree
-void print_pool_tree(const struct mem_pool *res, int size) {
-    if (res == NULL) {
-        printf("NULL\n");
-        return;
-    }
-    printf("%d(%c)\n", res->pool_size, (res->tree_node.color ? 'r' : 'b'));
-
-    PRINT_PREF
-    PRINT_NEXT(1)
-    print_pool_tree(res->tree_node.childs[0], size + 2);
-
-    PRINT_PREF
-    PRINT_NEXT(0)
-    print_pool_tree(res->tree_node.childs[1], size + 2);
-}
+// void print_pool_tree(const struct mem_pool *res, int size) {
+//     if (res == NULL) {
+//         printf("NULL\n");
+//         return;
+//     }
+//     printf("%d(%c)\n", res->pool_size, (res->tree_node.color ? 'r' : 'b'));
+//
+//     PRINT_PREF
+//     PRINT_NEXT(1)
+//     print_pool_tree(res->tree_node.childs[0], size + 2);
+//
+//     PRINT_PREF
+//     PRINT_NEXT(0)
+//     print_pool_tree(res->tree_node.childs[1], size + 2);
+// }
 
 void perf_test(struct mem_ctx *ctx, const size_t size) {
-    const int _size = 100000000;
+    const int _size = 1000000000;
     // _size = 1000000;
     clock_t my_time_alloc = 0, my_time_free = 0;
     clock_t time_alloc = 0, time_free = 0;
@@ -68,6 +68,8 @@ int main() {
     mem_malloc(&ctx, 1 << 8);
     mem_malloc(&ctx, 1 << 9);
     mem_malloc(&ctx, 1 << 10);
+    mem_malloc(&ctx, 1 << 11);
+    mem_malloc(&ctx, 1 << 12);
     perf_test(&ctx, 1024 * 4);
     // void *vals[100];
     // for (int i = 1; i < 16; i++) {
