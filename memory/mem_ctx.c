@@ -129,8 +129,7 @@ struct mem_pool *mem_alloc_pool(struct mem_ctx *ctx) {
         page->allocator.first_free = (pool = page->allocator.first_free)->allocator.first_free;
 
     pool->allocator.first_free = NULL;
-    if (++page->allocator.filled == POOL_NUMBER)
-        __list_spin(struct mem_page *, ctx->pages_list)
+    if (++page->allocator.filled == POOL_NUMBER) __list_spin(struct mem_page *, ctx->pages_list)
     return pool;
 }
 
@@ -161,20 +160,12 @@ void *mem_malloc(struct mem_ctx *ctx, const size_t size) {
     if (pool->allocator.first_free != NULL) pool->allocator.first_free = MEM_PTR(res = pool->allocator.first_free);
 
     pool->allocator.filled += 1 << pool->pool_size;
-    if (pool->allocator.filled == POOL_SIZE)
-        __list_spin(struct mem_pool *, ctx->pools_map[pool_size])
+    if (pool->allocator.filled == POOL_SIZE) __list_spin(struct mem_pool *, ctx->pools_map[pool_size])
     return res;
 }
 
 void mem_free(struct mem_ctx *ctx, void *data) {
-    struct mem_page *page = ctx->pages_root; {
-        // Search an page
-        while (page != NULL) {
-            if (data >= page->data && data < page->data + POOL_NUMBER * POOL_SIZE) break;
-            page = page->tree_node.childs[page->data < data];
-        }
-        if (page == NULL) return; // Data was not allocated
-    }
+    struct mem_page *page = mem_tree_page_find(ctx, data);
 
     struct mem_pool *pool = &page->pools[((size_t) data - (size_t) page->data) / POOL_SIZE];
     const size_t pool_size = pool->pool_size;
