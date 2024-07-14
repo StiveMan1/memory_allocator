@@ -58,7 +58,16 @@ void perf_test(struct mem_ctx *ctx, const size_t size) {
 
 int main() {
     struct mem_ctx ctx = (struct mem_ctx){NULL, 0, NULL, NULL};
-    // mem_malloc(&ctx, 1024 * 4);
+    mem_malloc(&ctx, 1 << 1);
+    mem_malloc(&ctx, 1 << 2);
+    mem_malloc(&ctx, 1 << 3);
+    mem_malloc(&ctx, 1 << 4);
+    mem_malloc(&ctx, 1 << 5);
+    mem_malloc(&ctx, 1 << 6);
+    mem_malloc(&ctx, 1 << 7);
+    mem_malloc(&ctx, 1 << 8);
+    mem_malloc(&ctx, 1 << 9);
+    mem_malloc(&ctx, 1 << 10);
     perf_test(&ctx, 1024 * 4);
     // void *vals[100];
     // for (int i = 1; i < 16; i++) {

@@ -18,7 +18,4 @@ struct mem_ctx {
 void *mem_malloc(struct mem_ctx *, size_t);
 void mem_free(struct mem_ctx *ctx, void *data);
 
-struct mem_pool *mem_tree_pool_insert(struct mem_ctx *ctx, const size_t pool_size);
-void mem_tree_pool_delete(struct mem_ctx *ctx, const size_t pool_size);
-
 #endif //MEM_CTX_H

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 project(memory_allocator C)
 
-#set(CMAKE_CXX_FLAGS "-O3 -O2") #-Wall -Wextra
+set(CMAKE_CXX_FLAGS "-O3 -O2 -Wall -Wextra") #-Wall -Wextra
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_C_STANDARD 99)
 

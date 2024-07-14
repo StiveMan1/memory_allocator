@@ -50,7 +50,6 @@ void *mem_pool_alloc_data(struct mem_pool *pool) {
     pool->allocator.flag = pool->allocator.filled == POOL_SIZE ? ALLOC_FULL : ALLOC_USED;
     return res;
 }
-
 void mem_pool_free_data(struct mem_pool *pool, void *data) {
     MEM_PTR(data) = pool->allocator.first_free;
     pool->allocator.first_free = data;
@@ -58,29 +57,6 @@ void mem_pool_free_data(struct mem_pool *pool, void *data) {
     pool->allocator.filled -= pool->pool_size;
     pool->allocator.flag = pool->allocator.filled == 0 ? ALLOC_FREE : ALLOC_USED;
 }
-
-
-struct mem_pool *mem_page_alloc_pool(struct mem_page *page) {
-    struct mem_pool *pool = &page->pools[page->allocator.filled];
-    if (page->allocator.first_free != NULL)
-        page->allocator.first_free = (pool = page->allocator.first_free)->allocator.first_free;
-    pool->allocator.first_free = NULL;
-
-    // memset(res, 0, size);
-    page->allocator.flag = ++page->allocator.filled == POOL_NUMBER ? ALLOC_FULL : ALLOC_USED;
-    return pool;
-}
-
-void mem_page_free_pool(struct mem_ctx *ctx, struct mem_page *page, struct mem_pool *pool) {
-    pool->allocator.first_free = page->allocator.first_free;
-    page->allocator.first_free = pool;
-
-    page->allocator.flag = --page->allocator.filled == 0 ? ALLOC_FREE : ALLOC_USED;
-
-    __list_take(struct mem_page *, ctx->page_list, page)
-    __list_put(struct mem_page *, ctx->page_list, page)
-}
-
 
 
 // Page Tree
@@ -132,8 +108,7 @@ void mem_tree_page_insert(struct mem_ctx *ctx, struct mem_page *new_page) {
             y_ = x_->tree_node.childs[1 - side]; // y_ is child
             x_->tree_node.childs[1 - side] = y_->tree_node.childs[side];
             y_->tree_node.childs[side] = x_;
-            g_->tree_node.childs[side] = y_;
-            x_ = y_;
+            x_ = g_->tree_node.childs[side] = y_;
         }
         g_->tree_node.color = RED;
         x_->tree_node.color = BLACK;
@@ -158,12 +133,25 @@ struct mem_pool *mem_alloc_pool(struct mem_ctx *ctx) {
         __list_put(struct mem_page *, ctx->page_list, page)
     }
 
-    struct mem_pool *pool = mem_page_alloc_pool(page);
+    struct mem_pool *pool = &page->pools[page->allocator.filled];
+    if (page->allocator.first_free != NULL)
+        page->allocator.first_free = (pool = page->allocator.first_free)->allocator.first_free;
+    pool->allocator.first_free = NULL;
 
-    if (page->allocator.flag == ALLOC_FULL)
+    if (++page->allocator.filled == POOL_NUMBER)
         __list_spin(struct mem_page *, ctx->page_list)
     return pool;
 }
+
+void mem_free_pool(struct mem_ctx *ctx, struct mem_page *page, struct mem_pool *pool) {
+    pool->allocator.first_free = page->allocator.first_free;
+    page->allocator.first_free = pool;
+    --page->allocator.filled;
+
+    __list_take(struct mem_page *, ctx->page_list, page)
+    __list_put(struct mem_page *, ctx->page_list, page)
+}
+
 
 // Pool Tree
 struct mem_pool *mem_tree_pool_insert(struct mem_ctx *ctx, const size_t pool_size) {
@@ -209,8 +197,7 @@ struct mem_pool *mem_tree_pool_insert(struct mem_ctx *ctx, const size_t pool_siz
             y_ = x_->tree_node.childs[1 - side]; // y_ is child
             x_->tree_node.childs[1 - side] = y_->tree_node.childs[side];
             y_->tree_node.childs[side] = x_;
-            g_->tree_node.childs[side] = y_;
-            x_ = y_;
+            x_ = g_->tree_node.childs[side] = y_;
         }
         g_->tree_node.color = RED;
         x_->tree_node.color = BLACK;
@@ -223,7 +210,6 @@ struct mem_pool *mem_tree_pool_insert(struct mem_ctx *ctx, const size_t pool_siz
     }
 
     ctx->pools_root->tree_node.color = BLACK;
-
     return pool;
 }
 
@@ -390,11 +376,7 @@ void mem_free(struct mem_ctx *ctx, void *data) {
 
         __list_take(struct mem_pool *, main_pool->list_header, pool)
 
-        // free this pool
-        if (pool->allocator.flag == ALLOC_FREE) {
-            mem_page_free_pool(ctx, page, pool);
-        }
-        // place in first in list
+        if (pool->allocator.flag == ALLOC_FREE) mem_free_pool(ctx, page, pool);
         else __list_put(struct mem_pool *, main_pool->list_header, pool)
 
         // Search an page
@@ -409,6 +391,6 @@ void mem_free(struct mem_ctx *ctx, void *data) {
     if (main_pool->allocator.flag == ALLOC_FREE && main_pool->list_header.size == 0) {
         // Remove from tree
         mem_tree_pool_delete(ctx, main_pool->pool_size);
-        mem_page_free_pool(ctx, page, main_pool);
+        mem_free_pool(ctx, page, pool);
     }
 }
