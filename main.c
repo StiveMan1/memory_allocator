@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <memory.h>
 
 #include "memory/mem_ctx.h"
 
@@ -30,34 +31,46 @@ size_t printing_pos;
 // }
 
 void perf_test(struct mem_ctx *ctx, const size_t size) {
-    const int _size = 1000000000;
-    // _size = 1000000;
+    size_t _size = 1000 * 1000;
+    void *map[1000];
     clock_t my_time_alloc = 0, my_time_free = 0;
     clock_t time_alloc = 0, time_free = 0;
 
-    for (int i = 0; i < _size; i++) {
-        clock_t s = clock();
-        void *val = mem_malloc(ctx, size);
-        my_time_alloc += clock() - s;
-        s = clock();
-        mem_free(ctx, val);
-        my_time_free += clock() - s;
+    for (size_t i = 0; i < 1000 * 1000; i++) {
+        {
+            clock_t s = clock();
+            for (int j = 0; j < 1000; j++) {
+                map[j] = mem_malloc(ctx, size);
+                memset(map[j], 0, size);
+            }
+            my_time_alloc += clock() - s;
 
+            s = clock();
+            for (int j = 0; j < 1000; j++)
+                mem_free(ctx, map[j]);
+            my_time_free += clock() - s;
+        }
+        {
+            clock_t s = clock();
+            for (int j = 0; j < 1000; j++) {
+                map[j] = malloc(size);
+                memset(map[j], 0, size);
+            }
+            time_alloc += clock() - s;
 
-        s = clock();
-        val = malloc(size);
-        time_alloc += clock() - s;
-        s = clock();
-        free(val);
-        time_free += clock() - s;
+            s = clock();
+            for (int j = 0; j < 1000; j++)
+                free(map[j]);
+            time_free += clock() - s;
+        }
     }
     printf("          malloc   free\n");
-    printf("my_time : %f %f\n", my_time_alloc / (double) CLOCKS_PER_SEC, my_time_free / (double) CLOCKS_PER_SEC);
-    printf("time    : %f %f\n", time_alloc / (double) CLOCKS_PER_SEC, time_free / (double) CLOCKS_PER_SEC);
+    printf("my_time : %f %f\n", (double) my_time_alloc / (double) CLOCKS_PER_SEC, (double) my_time_free / (double) CLOCKS_PER_SEC);
+    printf("time    : %f %f\n", (double) time_alloc / (double) CLOCKS_PER_SEC, (double) time_free / (double) CLOCKS_PER_SEC);
 }
 
 int main() {
-    struct mem_ctx ctx = (struct mem_ctx){NULL, 0, NULL};
+    struct mem_ctx ctx = (struct mem_ctx){{NULL, 0}, {}, NULL};
     mem_malloc(&ctx, 1 << 1);
     mem_malloc(&ctx, 1 << 2);
     mem_malloc(&ctx, 1 << 3);

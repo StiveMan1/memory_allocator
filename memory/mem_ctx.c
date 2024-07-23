@@ -1,6 +1,7 @@
 #include "mem_ctx.h"
 
 #include <stdio.h>
+#include <memory.h>
 
 #define BLACK   0
 #define RED     1
@@ -38,10 +39,22 @@ static struct mem_page *page_parents[256];
 
 #define __list_spin(header) header.first = __list_next(header.first);
 
+struct mem_page *mem_page_create() {
+    struct mem_page *res = malloc(sizeof(struct mem_page));
+    if (res == NULL) return NULL;
+    memset(res, 0, sizeof(struct mem_page));
+    res->data = malloc(POOL_SIZE * POOL_NUMBER);
 
-int get_pool_size(const size_t size) {
-    int pool_size = 2;
-    while (size > 1 << ++pool_size) {}
+    for (int i = 0; i < POOL_NUMBER; i++)
+        res->pools[i].data_pos = res->data + POOL_SIZE * i;
+
+
+    return res;
+}
+
+size_t get_pool_size(const size_t size) {
+    size_t pool_size = 2;
+    while ((int) size > (1 << ++pool_size)) {}
     return pool_size;
 }
 
@@ -67,7 +80,7 @@ void mem_tree_page_insert(struct mem_ctx *ctx, struct mem_page *new_page) {
         page = page->tree_node.childs[side];
     }
 
-    new_page->tree_node = (struct __tree_node){NULL, NULL, RED};
+    new_page->tree_node = (struct __tree_node){{NULL, NULL}, RED};
 
     if (pos == -1) ctx->pages_root = new_page;
     else page_parents[pos]->tree_node.childs[side] = new_page;
@@ -112,8 +125,8 @@ struct mem_pool *mem_alloc_pool(struct mem_ctx *ctx) {
     struct mem_page *page = ctx->pages_list.first;
     if (page == NULL || page->allocator.filled == POOL_NUMBER) {
         page = mem_page_create();
-        mem_tree_page_insert(ctx, page);
         if (page == NULL) return NULL;
+        mem_tree_page_insert(ctx, page);
 
         __list_put(ctx->pages_list, page)
     }
