@@ -5,12 +5,10 @@
 #ifndef MEM_POOL_H
 #define MEM_POOL_H
 
-#include <malloc.h>
+#include "mem_interfaces.h"
 
 #define POOL_SIZE 4096
 #define POOL_NUMBER 64
-
-#include "mem_interfaces.h"
 
 struct mem_pool {
     struct __list_node list_node;

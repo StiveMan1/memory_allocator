@@ -31,12 +31,11 @@ size_t printing_pos;
 // }
 
 void perf_test(struct mem_ctx *ctx, const size_t size) {
-    size_t _size = 1000 * 1000;
     void *map[1000];
     clock_t my_time_alloc = 0, my_time_free = 0;
     clock_t time_alloc = 0, time_free = 0;
 
-    for (size_t i = 0; i < 1000 * 1000; i++) {
+    for (size_t i = 0; i < 1000 * 10; i++) {
         {
             clock_t s = clock();
             for (int j = 0; j < 1000; j++) {
